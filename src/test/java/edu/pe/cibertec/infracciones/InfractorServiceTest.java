@@ -116,4 +116,33 @@ public class InfractorServiceTest {
         assertEquals(400.0, pagoGuardado.getMontoPagado());
         assertEquals(EstadoMulta.PAGADA, multa.getEstado());
     }
+
+    @Test
+    @DisplayName("Aplica recargo cuando la multa está vencida y sin descuento")
+    void aplicaRecargoPorMultaVencida() {
+
+        Long multaId = 1L;
+
+        Multa multa = new Multa();
+        multa.setId(multaId);
+        multa.setMonto(500.0);
+        multa.setEstado(EstadoMulta.PENDIENTE);
+        multa.setFechaEmision(LocalDate.now().minusDays(12));
+        multa.setFechaVencimiento(LocalDate.now().minusDays(2));
+
+        when(multaRepository.findById(multaId))
+                .thenReturn(Optional.of(multa));
+
+        pagoService.procesarPago(multaId);
+
+        ArgumentCaptor<Pago> captor = ArgumentCaptor.forClass(Pago.class);
+
+        verify(pagoRepository, times(1)).save(captor.capture());
+
+        Pago pagoGuardado = captor.getValue();
+
+        assertEquals(75.0, pagoGuardado.getRecargo());
+        assertEquals(0.0, pagoGuardado.getDescuentoAplicado());
+        assertEquals(575.0, pagoGuardado.getMontoPagado());
+    }
 }
