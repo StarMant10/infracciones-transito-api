@@ -3,13 +3,17 @@ package edu.pe.cibertec.infracciones;
 import edu.pe.cibertec.infracciones.model.EstadoMulta;
 import edu.pe.cibertec.infracciones.model.Infractor;
 import edu.pe.cibertec.infracciones.model.Multa;
+import edu.pe.cibertec.infracciones.model.Pago;
 import edu.pe.cibertec.infracciones.repository.InfractorRepository;
 import edu.pe.cibertec.infracciones.repository.MultaRepository;
+import edu.pe.cibertec.infracciones.repository.PagoRepository;
 import edu.pe.cibertec.infracciones.service.impl.InfractorServiceImpl;
 import edu.pe.cibertec.infracciones.service.impl.MultaServiceImpl;
+import edu.pe.cibertec.infracciones.service.impl.PagoServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -31,11 +35,17 @@ public class InfractorServiceTest {
     @Mock
     private MultaRepository multaRepository;
 
+    @Mock
+    private PagoRepository pagoRepository;
+
     @InjectMocks
     private InfractorServiceImpl infractorService;
 
     @InjectMocks
     private MultaServiceImpl multaService;
+
+    @InjectMocks
+    private PagoServiceImpl pagoService;
 
 
     @Test
@@ -78,5 +88,32 @@ public class InfractorServiceTest {
         assertEquals(EstadoMulta.VENCIDA, multa.getEstado());
 
         verify(multaRepository).saveAll(any());
+    }
+
+    @Test
+    @DisplayName("Aplica 20% de descuento si paga el mismo día")
+    void aplicaDescuentoPorPagoMismoDia() {
+
+        Long multaId = 1L;
+
+        Multa multa = new Multa();
+        multa.setId(multaId);
+        multa.setMonto(500.0);
+        multa.setEstado(EstadoMulta.PENDIENTE);
+        multa.setFechaEmision(LocalDate.now());
+        multa.setFechaVencimiento(LocalDate.now().plusDays(5));
+
+        when(multaRepository.findById(multaId))
+                .thenReturn(Optional.of(multa));
+
+        pagoService.procesarPago(multaId);
+
+        ArgumentCaptor<Pago> captor = ArgumentCaptor.forClass(Pago.class);
+        verify(pagoRepository).save(captor.capture());
+
+        Pago pagoGuardado = captor.getValue();
+
+        assertEquals(400.0, pagoGuardado.getMontoPagado());
+        assertEquals(EstadoMulta.PAGADA, multa.getEstado());
     }
 }

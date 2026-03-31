@@ -34,7 +34,7 @@ public class PagoServiceImpl implements IPagoService {
         long diasDesdeEmision = ChronoUnit.DAYS.between(multa.getFechaEmision(), hoy);
 
         double monto = multa.getMonto();
-        double descuento = diasDesdeEmision <= 5 ? monto * 0.20 : 0.0;
+        double descuento = diasDesdeEmision <= 0 ? monto * 0.20 : 0.0;
         double recargo = hoy.isAfter(multa.getFechaVencimiento()) ? monto * 0.15 : 0.0;
         double montoPagado = monto - descuento + recargo;
 

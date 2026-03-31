@@ -9,4 +9,6 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
     Optional<Pago> findByMulta_Id(Long multaId);
     List<Pago> findByMulta_Infractor_Id(Long infractorId);
     boolean existsByMulta_Id(Long multaId);
+
+    void procesarPago(Long multaId);
 }
