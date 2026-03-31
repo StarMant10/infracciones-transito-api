@@ -67,4 +67,20 @@ public class InfractorServiceImpl implements IInfractorService {
         dto.setBloqueado(infractor.isBloqueado());
         return dto;
     }
+
+    @Override
+    public void verificarBloqueo(Long infractorId) {
+
+        Infractor infractor = infractorRepository.findById(infractorId)
+                .orElseThrow(() -> new InfractorNotFoundException(infractorId));
+
+        int multasVencidas = infractorRepository.countMultasVencidasByInfractorId(infractorId);
+
+        if (multasVencidas >= 3) {
+            infractor.setBloqueado(true);
+            infractorRepository.save(infractor);
+
+            throw new RuntimeException("Infractor bloqueado por multas vencidas");
+        }
+    }
 }
